@@ -44,6 +44,9 @@ public class StoreToolWindow : EditorWindow
         SetUIStoreItems(newShopItemName);
 
         // TODO: Match prefabs with UI icons and add to store.instance.storeitems as new storeItem
+        AddItemToStore(newShopItemName);
+
+        groupEnabled = false;
     }
 
     void GeneratePrefabFromFBXModel(string itemName)
@@ -165,5 +168,50 @@ public class StoreToolWindow : EditorWindow
         importer.wrapMode = TextureWrapMode.Clamp;
         EditorUtility.SetDirty(importer);
         importer.SaveAndReimport();
+    }
+
+    void AddItemToStore(string itemName)
+    {
+        // get store item prefab
+        string[] prefabsPathArr =
+        {
+            "Assets","2_Prefabs"
+        };
+
+        string prefabPath = Path.Combine(Path.Combine(prefabsPathArr), itemName + ".prefab");
+
+        // get store item icon
+        string[] spritesPathArr =
+        {
+            "Assets", "Resources", "Sprites"
+        };
+
+        string spritesPath = Path.Combine(Path.Combine(spritesPathArr), itemName + ".png");
+
+        StoreItem storeItem = new StoreItem();
+        storeItem.Id = Store.Instance.StoreItems.Count;
+        storeItem.Name = itemName;
+        storeItem.Price = (Store.Instance.StoreItems.Count + 1) * 100;
+        storeItem.Icon = AssetDatabase.LoadAssetAtPath<Sprite>(spritesPath);
+        storeItem.Prefab = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject)) as GameObject;
+
+        bool isStoreItemDuplicate = false;
+
+        for (int i = 0; i < Store.Instance.StoreItems.Count; i++)
+        {
+            if (Store.Instance.StoreItems[i].Name == storeItem.Name)
+            {
+                isStoreItemDuplicate = true;
+                break;
+            }
+        }
+
+        if (!isStoreItemDuplicate)
+        {
+            Store.Instance.StoreItems.Add(storeItem);
+            Debug.Log(storeItem.Name + " is added to the store.");
+        }
+        else
+            Debug.LogError("Store item with name " + storeItem.Name + " is already added.");
     }
 }
