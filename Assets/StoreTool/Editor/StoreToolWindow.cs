@@ -41,6 +41,8 @@ public class StoreToolWindow : EditorWindow
         GeneratePrefabFromFBXModel(newShopItemName);
 
         // TODO: Get sprites and make necessary settings
+        SetUIStoreItems(newShopItemName);
+
         // TODO: Match prefabs with UI icons and add to store.instance.storeitems as new storeItem
     }
 
@@ -143,5 +145,25 @@ public class StoreToolWindow : EditorWindow
         }
         else
             Debug.LogError("Material named " + materialName + " has not been found in path: " + meshRendererMaterialsPath);
+    }
+
+    void SetUIStoreItems(string itemName)
+    {
+        string[] texturePathArr =
+        {
+            "Assets", "Resources", "Sprites"
+        };
+
+        string texturePath = Path.Combine(Path.Combine(texturePathArr), itemName + ".png");
+
+        AssetDatabase.Refresh();
+        AssetDatabase.ImportAsset(texturePath);
+        TextureImporter importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
+        //importer.isReadable = true;
+        importer.textureType = TextureImporterType.Sprite;
+        //TODO: Size and scale optimisation.
+        importer.wrapMode = TextureWrapMode.Clamp;
+        EditorUtility.SetDirty(importer);
+        importer.SaveAndReimport();
     }
 }
