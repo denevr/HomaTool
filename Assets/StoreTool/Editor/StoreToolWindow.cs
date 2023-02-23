@@ -44,7 +44,7 @@ public class StoreToolWindow : EditorWindow
         // TODO: Match prefabs with UI icons and add to store.instance.storeitems as new storeItem
     }
 
-    static void GeneratePrefabFromFBXModel(string itemName)
+    void GeneratePrefabFromFBXModel(string itemName)
     {
         string[] sourcePathArr =
         {
@@ -75,12 +75,43 @@ public class StoreToolWindow : EditorWindow
         {
             Debug.Log("Prefab was saved successfully");
 
-            //GameObject prefab = PrefabUtility.LoadPrefabContents(destinationPath);
-            // TODO: Make prefab settings here.
+            SetPrefabComponents(destinationPath);
         }
         else
             Debug.LogError("Prefab failed to save");
 
         DestroyImmediate(tmp);
+    }
+
+    void SetPrefabComponents(string prefabPath)
+    {
+        GameObject prefabToModify = PrefabUtility.LoadPrefabContents(prefabPath);
+
+        // Add CapsuleCollider component
+        CapsuleCollider capsuleCollider = prefabToModify.AddComponent<CapsuleCollider>();
+        capsuleCollider.center = new Vector3(0, .55f, 0);
+        capsuleCollider.radius = .2f;
+        capsuleCollider.height = 1.1f;
+
+        // Add Animator component
+        string[] controllerPath =
+        {
+            "Assets", "1_Graphics", "AnimatorControllers"
+        };
+
+        string animatorControllerPath = Path.Combine(Path.Combine(controllerPath), "Controller.controller");
+        Animator animator = prefabToModify.GetComponent<Animator>();
+
+        if (animator == null)
+            animator = prefabToModify.AddComponent<Animator>();
+
+        RuntimeAnimatorController runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(animatorControllerPath);
+
+        if (runtimeAnimatorController != null)
+            animator.runtimeAnimatorController = runtimeAnimatorController;
+        else
+            Debug.LogError("Animator controller named " + runtimeAnimatorController + " has not been found in path: " + animatorControllerPath);
+
+        PrefabUtility.SaveAsPrefabAsset(prefabToModify, prefabPath);
     }
 }
