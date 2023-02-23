@@ -6,7 +6,8 @@ using System.IO;
 
 public class StoreToolWindow : EditorWindow
 {
-    //string shopItemName = "Enter item name here";
+    string version = "v0.0.1";
+    string inputString;
     bool groupEnabled;
 
     [MenuItem("Tools/Store Tool Window")]
@@ -23,29 +24,35 @@ public class StoreToolWindow : EditorWindow
         EditorGUILayout.HelpBox("Please make sure you have read instructions clearly before continuing.", MessageType.Warning);
 
         groupEnabled = EditorGUILayout.BeginToggleGroup("I have read the instructions and completed each step as requested.", groupEnabled);
-        if (GUILayout.Button("Button"))
+        inputString = EditorGUILayout.TextField("Enter item names here as comma separated values.", inputString);
+        if (GUILayout.Button("Create Shop Items"))
         {
-            SetStoreItems();
+            if (!string.IsNullOrEmpty(inputString))
+                SetStoreItems(inputString);
+            else
+                Debug.LogError("Please provide a valid input.");
         }
         EditorGUILayout.EndToggleGroup();
 
-        GUILayout.Label("v0.0.1", EditorStyles.miniLabel);
+        GUILayout.Label(version, EditorStyles.miniLabel);
     }
 
-    public void SetStoreItems()
+    public void SetStoreItems(string commaSeparatedInput)
     {
-        // For testing purposes only, delete later
-        var newShopItemName = "example_store_item_1";
+        string[] newShopItemsArr = commaSeparatedInput.Split(',');
+        string newShopItemName;
 
-        // Get all fbx and turn it into proper prefab with attributes
-        GeneratePrefabFromFBXModel(newShopItemName);
+        for (int i = 0; i < newShopItemsArr.Length; i++)
+        {
+            newShopItemName = newShopItemsArr[i];
 
-        // TODO: Get sprites and make necessary settings
-        SetUIStoreItems(newShopItemName);
+            GeneratePrefabFromFBXModel(newShopItemName);
+            SetUIStoreItems(newShopItemName);
+            AddItemToStore(newShopItemName);
+        }
 
-        // TODO: Match prefabs with UI icons and add to store.instance.storeitems as new storeItem
-        AddItemToStore(newShopItemName);
-
+        // TODO: Show report for potentially forgotten assets.
+        inputString = "Enter item names here as comma separated values.";
         groupEnabled = false;
     }
 
