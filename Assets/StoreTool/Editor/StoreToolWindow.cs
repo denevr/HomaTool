@@ -76,6 +76,7 @@ public class StoreToolWindow : EditorWindow
             Debug.Log("Prefab was saved successfully");
 
             SetPrefabComponents(destinationPath);
+            SetPrefabColors(destinationPath, "Purple");
         }
         else
             Debug.LogError("Prefab failed to save");
@@ -113,5 +114,34 @@ public class StoreToolWindow : EditorWindow
             Debug.LogError("Animator controller named " + runtimeAnimatorController + " has not been found in path: " + animatorControllerPath);
 
         PrefabUtility.SaveAsPrefabAsset(prefabToModify, prefabPath);
+    }
+
+    void SetPrefabColors(string prefabPath, string materialName)
+    {
+        GameObject prefabToModify = PrefabUtility.LoadPrefabContents(prefabPath);
+
+        string[] materialsPath =
+        {
+            "Assets", "1_Graphics", "Materials"
+        };
+
+        string meshRendererMaterialsPath = Path.Combine(Path.Combine(materialsPath), materialName + ".mat");
+        Material targetMaterial = AssetDatabase.LoadAssetAtPath<Material>(meshRendererMaterialsPath);
+
+        if (targetMaterial != null)
+        {
+            SkinnedMeshRenderer smr = prefabToModify.GetComponentInChildren<SkinnedMeshRenderer>();
+            var mats = smr.sharedMaterials;
+
+            for (int i = 0; i < mats.Length; i++)
+            {
+                mats[i] = targetMaterial;
+            }
+
+            smr.sharedMaterials = mats;
+            PrefabUtility.SaveAsPrefabAsset(prefabToModify, prefabPath);
+        }
+        else
+            Debug.LogError("Material named " + materialName + " has not been found in path: " + meshRendererMaterialsPath);
     }
 }
