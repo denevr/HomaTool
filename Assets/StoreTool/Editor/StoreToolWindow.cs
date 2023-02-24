@@ -102,6 +102,13 @@ public class StoreToolWindow : EditorWindow
 
         importer.animationType = ModelImporterAnimationType.Human;
         importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+
+        importer.meshCompression = ModelImporterMeshCompression.High;
+        importer.meshOptimizationFlags = MeshOptimizationFlags.Everything;
+        importer.optimizeMeshPolygons = true;
+        importer.optimizeMeshVertices = true;
+        importer.optimizeGameObjects = true;
+
         EditorUtility.SetDirty(importer);
         importer.SaveAndReimport();
 
@@ -182,6 +189,7 @@ public class StoreToolWindow : EditorWindow
             }
 
             smr.sharedMaterials = mats;
+            smr.sharedMesh.Optimize();
             PrefabUtility.SaveAsPrefabAsset(prefabToModify, prefabPath);
         }
         else
@@ -199,11 +207,27 @@ public class StoreToolWindow : EditorWindow
 
         AssetDatabase.Refresh();
         AssetDatabase.ImportAsset(texturePath);
-        TextureImporter importer = AssetImporter.GetAtPath(texturePath) as TextureImporter; //null check here
-        //importer.isReadable = true;
+        TextureImporter importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
+        TextureImporterSettings importerSettings = new TextureImporterSettings();
+
+        if (importer == null)
+        {
+            Debug.LogError("Sprite named \"" + itemName + "\" has not been found in path: " + texturePath);
+            return;
+        }
+
+        importer.ReadTextureSettings(importerSettings);
+        importerSettings.npotScale = TextureImporterNPOTScale.ToNearest;
+        importer.SetTextureSettings(importerSettings);
+
         importer.textureType = TextureImporterType.Sprite;
-        //TODO: Size and scale optimisation.
+        importer.maxTextureSize = 128; // usually 1024 is sufficient
+        //importer.isReadable = true; // requires more space in memory, do not use it unless needed
+        importer.alphaIsTransparency = true;
+        importer.mipmapEnabled = false; // if enabled, it increases the size both on disk and in memory. Not needed as sprites are used in a canvas.
         importer.wrapMode = TextureWrapMode.Clamp;
+        importer.textureCompression = TextureImporterCompression.CompressedLQ;
+        importer.crunchedCompression = true;
         EditorUtility.SetDirty(importer);
         importer.SaveAndReimport();
 
