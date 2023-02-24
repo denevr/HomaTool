@@ -10,6 +10,11 @@ public class StoreToolWindow : EditorWindow
     string inputString;
     bool groupEnabled;
 
+    List<string> processedFBXFilePaths  = new List<string>();
+    List<string> processedPNGFilePaths = new List<string>();
+    List<string> generatedPrefabFilePaths = new List<string>();
+
+
     [MenuItem("Tools/Store Tool Window")]
     static void Init()
     {
@@ -20,39 +25,52 @@ public class StoreToolWindow : EditorWindow
     void OnGUI()
     {
         GUILayout.Label("Instructions", EditorStyles.boldLabel);
-        EditorGUILayout.LabelField("Write instructions here");
+        EditorGUILayout.LabelField("Please follow these steps carefully:\n" +
+                                   "\n1) Make sure you have put all your 3D .fbx models in Assets/Resources/Models" +
+                                   "\n2) Make sure you have put all your 2D .png renders in Assets/Resources/Sprites" +
+                                   "\n3) Make sure all of the related files of a new store item has the same name." +
+                                   "\n4) Type this name to the input field below and hit the button!\n" +
+                                   "\nExample: If you want to add a new shop item named \"NewShopItem\", you must have " +
+                                   "\"NewShopItem.fbx\" and \"NewShopItem.png\" in above paths. Then, type \"NewShopItem\" to the input field " +
+                                   "below and enjoy!", EditorStyles.wordWrappedLabel);
         EditorGUILayout.HelpBox("Please make sure you have read instructions clearly before continuing.", MessageType.Warning);
 
+        GUI.color = Color.yellow;
         groupEnabled = EditorGUILayout.BeginToggleGroup("I have read the instructions and completed each step as requested.", groupEnabled);
-        inputString = EditorGUILayout.TextField("Enter item names here as comma separated values.", inputString);
-        if (GUILayout.Button("Create Shop Items"))
+        GUI.color = Color.white;
+        EditorGUILayout.LabelField("Enter item names here as comma separated values, without any space.", EditorStyles.wordWrappedLabel);
+        inputString = EditorGUILayout.TextField("Item names:", inputString);
+
+        if (GUILayout.Button("Create Shop Items", GUILayout.Height(50)))
         {
             if (!string.IsNullOrEmpty(inputString))
                 SetStoreItems(inputString);
             else
                 Debug.LogError("Please provide a valid input.");
         }
-        EditorGUILayout.EndToggleGroup();
 
+        EditorGUILayout.EndToggleGroup();
         GUILayout.Label(version, EditorStyles.miniLabel);
     }
 
     public void SetStoreItems(string commaSeparatedInput)
     {
+        processedFBXFilePaths.Clear();
+        processedPNGFilePaths.Clear();
+        generatedPrefabFilePaths.Clear();
+
         string[] newShopItemsArr = commaSeparatedInput.Split(',');
-        string newShopItemName;
 
         for (int i = 0; i < newShopItemsArr.Length; i++)
         {
-            newShopItemName = newShopItemsArr[i];
+            var newShopItemName = newShopItemsArr[i];
 
             GeneratePrefabFromFBXModel(newShopItemName);
             SetUIStoreItems(newShopItemName);
             AddItemToStore(newShopItemName);
         }
 
-        // TODO: Show report for potentially forgotten assets.
-        inputString = "Enter item names here as comma separated values.";
+        ShowToolReport();
         groupEnabled = false;
     }
 
@@ -72,6 +90,16 @@ public class StoreToolWindow : EditorWindow
         string destinationPath = Path.Combine(Path.Combine(destinationPathArr), itemName + ".prefab");
 
         ModelImporter importer = AssetImporter.GetAtPath(sourcePath) as ModelImporter;
+
+        if (importer == null)
+        {
+            Debug.LogError("Model named \"" + itemName + "\" has not been found in path: " + sourcePath);
+            return;
+        }
+
+        if (!processedFBXFilePaths.Contains(sourcePath))
+            processedFBXFilePaths.Add(sourcePath);
+
         importer.animationType = ModelImporterAnimationType.Human;
         importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
         EditorUtility.SetDirty(importer);
@@ -85,13 +113,16 @@ public class StoreToolWindow : EditorWindow
 
         if (prefabSuccess == true)
         {
-            Debug.Log("Prefab was saved successfully");
+            Debug.Log("Prefab with name \"" + itemName + "\" is generated successfully.");
+
+            if (!generatedPrefabFilePaths.Contains(destinationPath))
+                generatedPrefabFilePaths.Add(destinationPath);
 
             SetPrefabComponents(destinationPath);
             SetPrefabColors(destinationPath, "Purple");
         }
         else
-            Debug.LogError("Prefab failed to save");
+            Debug.LogError("Failed to save prefab with name \"" + itemName + "\".");
 
         DestroyImmediate(tmp);
     }
@@ -123,7 +154,7 @@ public class StoreToolWindow : EditorWindow
         if (runtimeAnimatorController != null)
             animator.runtimeAnimatorController = runtimeAnimatorController;
         else
-            Debug.LogError("Animator controller named " + runtimeAnimatorController + " has not been found in path: " + animatorControllerPath);
+            Debug.LogError("Animator controller named \"" + runtimeAnimatorController + "\" has not been found in path: " + animatorControllerPath);
 
         PrefabUtility.SaveAsPrefabAsset(prefabToModify, prefabPath);
     }
@@ -154,7 +185,7 @@ public class StoreToolWindow : EditorWindow
             PrefabUtility.SaveAsPrefabAsset(prefabToModify, prefabPath);
         }
         else
-            Debug.LogError("Material named " + materialName + " has not been found in path: " + meshRendererMaterialsPath);
+            Debug.LogError("Material named \"" + materialName + "\" has not been found in path: " + meshRendererMaterialsPath);
     }
 
     void SetUIStoreItems(string itemName)
@@ -168,13 +199,16 @@ public class StoreToolWindow : EditorWindow
 
         AssetDatabase.Refresh();
         AssetDatabase.ImportAsset(texturePath);
-        TextureImporter importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
+        TextureImporter importer = AssetImporter.GetAtPath(texturePath) as TextureImporter; //null check here
         //importer.isReadable = true;
         importer.textureType = TextureImporterType.Sprite;
         //TODO: Size and scale optimisation.
         importer.wrapMode = TextureWrapMode.Clamp;
         EditorUtility.SetDirty(importer);
         importer.SaveAndReimport();
+
+        if (!processedPNGFilePaths.Contains(texturePath))
+            processedPNGFilePaths.Add(texturePath);
     }
 
     void AddItemToStore(string itemName)
@@ -216,9 +250,25 @@ public class StoreToolWindow : EditorWindow
         if (!isStoreItemDuplicate)
         {
             Store.Instance.StoreItems.Add(storeItem);
-            Debug.Log(storeItem.Name + " is added to the store.");
+            Debug.Log("\"" + storeItem.Name + "\" is added to the store.");
         }
         else
-            Debug.LogError("Store item with name " + storeItem.Name + " is already added.");
+            Debug.LogError("Store item with name \"" + storeItem.Name + "\" is already added.");
+    }
+
+    void ShowToolReport()
+    {
+        StoreToolPopup popup = (StoreToolPopup)EditorWindow.GetWindow(typeof(StoreToolPopup));
+        //popup.position = new Rect(Screen.width / 2, Screen.height / 2, Screen.width / 2, Screen.height / 2);
+
+        popup.fbxPathList = processedFBXFilePaths;
+        popup.pngPathList = processedPNGFilePaths;
+        popup.prefabPathList = generatedPrefabFilePaths;
+
+        popup.GetAllUnprocessedFileTypesOfExtension(".fbx", popup.potentiallyMissingFbxPathList, popup.fbxPathList);
+        popup.GetAllUnprocessedFileTypesOfExtension(".png", popup.potentiallyMissingPngPathList, popup.pngPathList);
+        popup.GetAllUnprocessedFileTypesOfExtension(".prefab", popup.potentiallyMissingPrefabPathList, popup.prefabPathList);
+
+        popup.Show();
     }
 }
