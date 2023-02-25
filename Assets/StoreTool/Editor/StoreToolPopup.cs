@@ -23,7 +23,7 @@ public class StoreToolPopup : EditorWindow
         EditorGUILayout.LabelField("Store Tool Report", EditorStyles.wordWrappedLabel);
         scrollPosition = GUILayout.BeginScrollView(scrollPosition, true, true, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
 
-        //generated/used files
+        // Show processed fbx and png files, together with new prefabs.
         GUILayout.Space(20);
         GUI.color = Color.green;
         GUILayout.Label("Models (" + fbxPathList.Count + ") processed in the process:", EditorStyles.boldLabel);
@@ -45,7 +45,7 @@ public class StoreToolPopup : EditorWindow
         for (int i = 0; i < prefabPathList.Count; i++)
             EditorGUILayout.LabelField(prefabPathList[i], EditorStyles.wordWrappedLabel);
 
-        //potentially missing files
+        // Show unprocessed files with following extensions: .fbx, .png, .prefabs.
         GUILayout.Space(20);
         GUI.color = Color.red;
         GUILayout.Label("All unprocessed .fbx files in the project:", EditorStyles.boldLabel);
@@ -67,7 +67,7 @@ public class StoreToolPopup : EditorWindow
         for (int i = 0; i < potentiallyMissingPrefabPathList.Count; i++)
             EditorGUILayout.LabelField(potentiallyMissingPrefabPathList[i], EditorStyles.wordWrappedLabel);
 
-        //potentially missing files
+        // Show potentially missing files and a quick add button if needed.
         GUI.enabled = potentiallyMissingItems.Count > 0 ? true : false;
 
         if (potentiallyMissingItems.Count > 0)
@@ -95,7 +95,12 @@ public class StoreToolPopup : EditorWindow
         GUILayout.EndScrollView();
     }
 
-
+    /// <summary>
+    /// Get a list of all unprocessed files with specific extension.
+    /// </summary>
+    /// <param name="fileExtension"></param>
+    /// <param name="potentiallyMissingFileList"></param>
+    /// <param name="processedFileList"></param>
     public void GetAllUnprocessedFileTypesOfExtension(string fileExtension, List<string> potentiallyMissingFileList, List<string> processedFileList)
     {
         potentiallyMissingFileList.Clear();
@@ -107,40 +112,45 @@ public class StoreToolPopup : EditorWindow
         }
     }
 
+    /// <summary>
+    /// Checks for potentially missing items with following steps:
+    /// 1) Find a .fbx and .png file with the same name. 
+    /// 2) Check if either one of them are processed.
+    /// 3) Check if there is an item with that name in the store.
+    /// 4) If not, show it as a potentially missing store item.
+    /// </summary>
     public void CheckForPotentiallyMissingStoreItems()
     {
         potentiallyMissingItems.Clear();
 
-        // make single iteration with another fcn
         string[] fbxFilesProcessed = new string[fbxPathList.Count];
         string[] pngFilesProcessed = new string[pngPathList.Count];
 
-        // get names of all processed items
+        // Get names of all processed items
         for (int i = 0; i < fbxFilesProcessed.Length; i++)
             fbxFilesProcessed[i] = Path.GetFileNameWithoutExtension(fbxPathList[i]);
         for (int i = 0; i < pngFilesProcessed.Length; i++)
             pngFilesProcessed[i] = Path.GetFileNameWithoutExtension(pngPathList[i]);
 
-        // get names of all fbx files in the project
+        // Get names of all .fbx files in the project
         var fbxFiles = Directory.EnumerateFiles("Assets", "*.*", SearchOption.AllDirectories)
             .Where(s => s.ToLower().EndsWith(".fbx")).ToArray();
         for (int i = 0; i < fbxFiles.Length; i++)
             fbxFiles[i] = Path.GetFileNameWithoutExtension(fbxFiles[i]);
 
-        // get names of all png files in the project
+        // Get names of all .png files in the project
         var pngFiles = Directory.EnumerateFiles("Assets", "*.*", SearchOption.AllDirectories)
             .Where(s => s.ToLower().EndsWith(".png")).ToArray();
         for (int i = 0; i < pngFiles.Length; i++)
             pngFiles[i] = Path.GetFileNameWithoutExtension(pngFiles[i]);
 
-        // filter for unique elements
+        // Filter all .fbx and .png files as unique elements and get common items.
         fbxFiles.GroupBy(i => i).Where(g => g.Count() == 1).Select(g => g.Key);
         pngFiles.GroupBy(i => i).Where(g => g.Count() == 1).Select(g => g.Key);
 
         var intersect = fbxFiles.Intersect(pngFiles);
-        //var currentStoreItems = Store.Instance.StoreItems.
 
-        // if an fbx and png file has the same name and is missing in the current store, classify it as a potentially forgotten element
+        // Check if those unique item names are among the current store or processed files.
         foreach (var commonFile in intersect)
         {
             if (!fbxFilesProcessed.Contains(commonFile) || !pngFilesProcessed.Contains(commonFile))

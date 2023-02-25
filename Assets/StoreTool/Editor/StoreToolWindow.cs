@@ -53,6 +53,10 @@ public class StoreToolWindow : EditorWindow
         GUILayout.Label(version, EditorStyles.miniLabel);
     }
 
+    /// <summary>
+    /// Reads user input as comma separated values and perform each operation in order.
+    /// </summary>
+    /// <param name="commaSeparatedInput"></param>
     public void SetStoreItems(string commaSeparatedInput)
     {
         processedFBXFilePaths.Clear();
@@ -75,19 +79,22 @@ public class StoreToolWindow : EditorWindow
         groupEnabled = false;
     }
 
+    /// <summary>
+    /// Generate prefab from an fbx model with name = itemName.fbx, located in a previously defined path.
+    /// </summary>
+    /// <param name="itemName"></param>
     void GeneratePrefabFromFBXModel(string itemName)
     {
         string[] sourcePathArr =
         {
             "Assets","Resources", "Models"
         };
+        string sourcePath = Path.Combine(Path.Combine(sourcePathArr), itemName + ".fbx");
 
         string[] destinationPathArr =
         {
             "Assets","2_Prefabs"
         };
-
-        string sourcePath = Path.Combine(Path.Combine(sourcePathArr), itemName + ".fbx");
         string destinationPath = Path.Combine(Path.Combine(destinationPathArr), itemName + ".prefab");
 
         ModelImporter importer = AssetImporter.GetAtPath(sourcePath) as ModelImporter;
@@ -135,6 +142,10 @@ public class StoreToolWindow : EditorWindow
         DestroyImmediate(tmp);
     }
 
+    /// <summary>
+    /// Add or set currently existing components in a newly generated store item prefab.
+    /// </summary>
+    /// <param name="prefabPath"></param>
     void SetPrefabComponents(string prefabPath)
     {
         GameObject prefabToModify = PrefabUtility.LoadPrefabContents(prefabPath);
@@ -150,7 +161,6 @@ public class StoreToolWindow : EditorWindow
         {
             "Assets", "1_Graphics", "AnimatorControllers"
         };
-
         string animatorControllerPath = Path.Combine(Path.Combine(controllerPath), "Controller.controller");
         Animator animator = prefabToModify.GetComponent<Animator>();
 
@@ -167,6 +177,11 @@ public class StoreToolWindow : EditorWindow
         PrefabUtility.SaveAsPrefabAsset(prefabToModify, prefabPath);
     }
 
+    /// <summary>
+    /// Set mesh renderer materials of store item prefab located in a previously defined path.
+    /// </summary>
+    /// <param name="prefabPath"></param>
+    /// <param name="materialName"></param>
     void SetPrefabColors(string prefabPath, string materialName)
     {
         GameObject prefabToModify = PrefabUtility.LoadPrefabContents(prefabPath);
@@ -175,7 +190,6 @@ public class StoreToolWindow : EditorWindow
         {
             "Assets", "1_Graphics", "Materials"
         };
-
         string meshRendererMaterialsPath = Path.Combine(Path.Combine(materialsPath), materialName + ".mat");
         Material targetMaterial = AssetDatabase.LoadAssetAtPath<Material>(meshRendererMaterialsPath);
 
@@ -197,13 +211,16 @@ public class StoreToolWindow : EditorWindow
             Debug.LogError("Material named \"" + materialName + "\" has not been found in path: " + meshRendererMaterialsPath);
     }
 
+    /// <summary>
+    /// Set UI icon of the new store item located in a previously defined path.
+    /// </summary>
+    /// <param name="itemName"></param>
     void SetUIStoreItems(string itemName)
     {
         string[] texturePathArr =
         {
             "Assets", "Resources", "Sprites"
         };
-
         string texturePath = Path.Combine(Path.Combine(texturePathArr), itemName + ".png");
 
         AssetDatabase.Refresh();
@@ -236,22 +253,22 @@ public class StoreToolWindow : EditorWindow
             processedPNGFilePaths.Add(texturePath);
     }
 
+    /// <summary>
+    /// Add new store item to in-game shop if it is not already added.
+    /// </summary>
+    /// <param name="itemName"></param>
     void AddItemToStore(string itemName)
     {
-        // get store item prefab
         string[] prefabsPathArr =
         {
             "Assets","2_Prefabs"
         };
-
         string prefabPath = Path.Combine(Path.Combine(prefabsPathArr), itemName + ".prefab");
 
-        // get store item icon
         string[] spritesPathArr =
         {
             "Assets", "Resources", "Sprites"
         };
-
         string spritesPath = Path.Combine(Path.Combine(spritesPathArr), itemName + ".png");
 
         StoreItem storeItem = new StoreItem();
@@ -274,13 +291,21 @@ public class StoreToolWindow : EditorWindow
 
         if (!isStoreItemDuplicate)
         {
-            Store.Instance.StoreItems.Add(storeItem);
-            Debug.Log("\"" + storeItem.Name + "\" is added to the store.");
+            if (storeItem.Prefab != null && storeItem.Icon != null)
+            {
+                Store.Instance.StoreItems.Add(storeItem);
+                Debug.Log("\"" + storeItem.Name + "\" is added to the store.");
+            }
+            else
+                Debug.LogError("Store item with name \"" + storeItem.Name + "\" could NOT be added because of missing components.");
         }
         else
             Debug.LogError("Store item with name \"" + storeItem.Name + "\" is already added.");
     }
 
+    /// <summary>
+    /// Show tool report about processed, generated and potentially missing items in a new window, with an option to quick add.
+    /// </summary>
     void ShowToolReport()
     {
         StoreToolPopup popup = (StoreToolPopup)EditorWindow.GetWindow(typeof(StoreToolPopup));
