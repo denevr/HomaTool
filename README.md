@@ -1,7 +1,7 @@
 # HomaTool
 
 
-Personal Notes
+## Personal Notes
 - I try to simplify the process as much as possible with only a button located at Tools/Store Tool Window.
 - Item IDs and prices have a formula related to each other, similar to existing items.
 - Prefab component settings like animator contollers and collider sizes are built similar to existing items.
@@ -10,7 +10,7 @@ Personal Notes
 - Please feel free to contact for anything.
 
 
-Instructions
+## Instructions
 
 1) Make sure you have put all your 3D .fbx models in Assets/Resources/Models
 2) Make sure you have put all your 2D .png renders in Assets/Resources/Sprites
@@ -21,13 +21,13 @@ Example: If you want to add a new shop item named "NewShopItem", you must have "
 Then, type "NewShopItem" to the input field below and enjoy!
 
 
-Important Notes
+## Important Notes
 - Every file corresponding to the same item MUST have the same name.
 - Files MUST be in the paths listed above.
 - Adding single or multiple items together is possible. Use comma spearated item names without any space in between.
 - Potentially missing files are files that are usually correctly located and named but forgotten to enter as an input.
 
 
-What can be improved?
+## What can be improved?
 - To use different items on different paths, drag and drop for folder locations can be implemented.(However it lengthens the automation process and might create human errors)
 - Optimizations can go furher depending on the mutual characteristics of 3D and 2D items.
