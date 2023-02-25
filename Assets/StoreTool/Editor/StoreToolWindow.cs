@@ -64,6 +64,7 @@ public class StoreToolWindow : EditorWindow
         for (int i = 0; i < newShopItemsArr.Length; i++)
         {
             var newShopItemName = newShopItemsArr[i];
+            if (newShopItemName.Length == 0) continue;
 
             GeneratePrefabFromFBXModel(newShopItemName);
             SetUIStoreItems(newShopItemName);
@@ -293,6 +294,7 @@ public class StoreToolWindow : EditorWindow
         popup.GetAllUnprocessedFileTypesOfExtension(".png", popup.potentiallyMissingPngPathList, popup.pngPathList);
         popup.GetAllUnprocessedFileTypesOfExtension(".prefab", popup.potentiallyMissingPrefabPathList, popup.prefabPathList);
 
+        popup.CheckForPotentiallyMissingStoreItems();
         popup.Show();
     }
 }
