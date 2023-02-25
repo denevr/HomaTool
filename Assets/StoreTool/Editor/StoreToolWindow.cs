@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using UnityEditor.SceneManagement;
 
 public class StoreToolWindow : EditorWindow
 {
@@ -77,6 +78,8 @@ public class StoreToolWindow : EditorWindow
 
         ShowToolReport();
         groupEnabled = false;
+
+        EditorSceneManager.SaveOpenScenes();
     }
 
     /// <summary>
