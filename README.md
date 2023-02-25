@@ -2,15 +2,16 @@
 
 
 Personal Notes
-- I try to simplify the process as much as possible with only a button.
+- I try to simplify the process as much as possible with only a button located at Tools/Store Tool Window.
 - Item IDs and prices have a formula related to each other, similar to existing items.
 - Prefab component settings like animator contollers and collider sizes are built similar to existing items.
 - The more 3D models and 2D renders are alike each other (such as rig&bone count, texture size of POT, etc), the more optimization can be possible.
-- There are 2 editor scripts with comments for each and every step.
+- There are 2 editor scripts with comments for each and every step located in Assets/StoreTool
 - Please feel free to contact for anything.
 
 
 Instructions
+
 1) Make sure you have put all your 3D .fbx models in Assets/Resources/Models
 2) Make sure you have put all your 2D .png renders in Assets/Resources/Sprites
 3) Make sure all of the related files of a new store item has the same name.
